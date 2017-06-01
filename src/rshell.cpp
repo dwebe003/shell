@@ -284,42 +284,6 @@ Legacy* treeUtility(vector<char>& connectors, vector<string>& commands)
 
         return connector;  //input = connector
     }
-    
-    if(connectors.back() == ')')
-    {
-        connectors.pop_back();
-        
-        while(connectors.back() != '(')
-        {
-            if (connectors.back() == '&')   //if last element of connectors is '&', create AND object
-            {
-                connectors.pop_back();   //delete last object, in this case '&'. this is possible because there are two '&'
-                AND* connector = new AND(); //creat new AND object
-                
-                connector->setrightChild(new CMD(commands.back())); //simultaneously create new CMD of last element of commands and set it as connector's right child
-                commands.pop_back();  //delete commands last element
-                connector->setleftChild(treeUtility(connectors, commands)); //recursively call treeUtility using updated connectors and commands
-                
-                Parenth* connector2 = new Parenth(connector);
-                return connector2;
-            }
-            
-            if (connectors.back() == '|') //if last element is '|'
-            {
-                connectors.pop_back();   //delete last element of connectors
-                OR* connector = new OR();   //create new OR object
-        
-                connector->setRightChild(new CMD(commands.back())); //simultaneously create CMD using last element of commands and set it as connector's right child
-                commands.pop_back();  //delete commands last element 
-        
-                connector->setLeftChild(treeUtility(connectors, commands)); //recursively call treeUtility using updated connectors and commands
-                
-                Parenth* connector2 = new Parenth(connector);
-                return connector2;
-            }
-        }
-        
-    }
 
 
     if (connectors.back() == '|') //if last element is '|'
@@ -333,6 +297,89 @@ Legacy* treeUtility(vector<char>& connectors, vector<string>& commands)
         connector->setLeftChild(treeUtility(connectors, commands)); //recursively call treeUtility using updated connectors and commands
         
         return connector;  //input = connector
+    }
+    
+    if(connectors.back() == ')')
+    {
+        stack<string> cmdStack;
+        stack<char> conStack;
+        vector<char> copyConnector;
+        vector<string> copyCommand;
+        int count = 1;
+        
+        connectors.pop_back();
+        
+        if(connectors.back() != ')')
+        {
+            cmdStack.push(commands.back());
+            commands.pop_back();
+        }
+        
+        while(count != 0)
+        {
+            if(connectors.back() == '(')
+            {
+                count--;
+                conStack.push(connectors.back());
+                connectors.pop_back();
+            }
+            else if(connectors.back() == ')')
+            {
+                count++;
+                conStack.push(connectors.back());
+                connectors.pop_back();
+                if(connectors.back() != ')')
+                {
+                    cmdStack.push(commands.back());
+                    commands.pop_back();
+                }
+            }
+            else
+            {
+                conStack.push(connectors.back());
+                connectors.pop_back();
+                if(connectors.back() != ')')
+                {
+                    cmdStack.push(commands.back());
+                    commands.pop_back();
+                }
+            }
+        }
+        
+        conStack.pop();
+        
+        int conStackSize = conStack.size();
+        int cmdStackSize = cmdStack.size();
+        
+        for(int i = 0; i < conStackSize; i++)
+        {
+            copyConnector.push_back(conStack.top());
+            conStack.pop();
+        }
+        
+        for(int i = 0; i < cmdStackSize; i++)
+        {
+            copyCommand.push_back(cmdStack.top());
+            cmdStack.pop();
+        }
+        
+        
+        //finally create object
+        Parenth* par = new Parenth(treeUtility(copyConnector, copyCommand));
+        
+        return par;
+        
+//        Legacy* dec = par;
+//        
+//        while(!connectors.empty())
+//        {
+//            dec = treeUtility(connectors, commands);
+//        }
+//        
+//        return dec;
+        
+        
+        
     }
     
     return 0;
